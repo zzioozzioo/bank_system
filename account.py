@@ -109,3 +109,70 @@ def get_my_accounts(user_session):
         print(f"❌ 조회 중 오류 발생: {e}")
     finally:
         conn.close()
+
+def manage_account(user_session):
+    while True:
+        print(f"\n--- 계좌 관리 메뉴 ---")
+        print("1. 계좌 수정")
+        print("2. 계좌 삭제 (주의: 거래내역 포함 삭제)")
+        print("3. 이전 메뉴")
+        
+        sub_choice = input("선택: ").strip()
+        
+        if sub_choice == '1':
+            update_account(user_session)
+        elif sub_choice == '2':
+            delete_account(user_session)       
+        elif sub_choice == '3':
+            break
+        else:
+            print("❌ 잘못된 입력입니다.")
+
+def update_account(session):
+    print("\n--- 계좌 별칭 수정 ---")
+    acc_num = input("수정할 계좌번호: ").strip()
+    new_alias = input("새로운 별칭: ").strip()
+
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        # 본인의 계좌만 수정할 수 있도록 user_no 조건 포함
+        sql = "UPDATE Accounts SET account_alias = :1 WHERE account_num = :2 AND user_no = :3"
+        cursor.execute(sql, [new_alias, acc_num, session['user_no']])
+        
+        if cursor.rowcount > 0:
+            conn.commit()
+            print(f"✅ 계좌[{acc_num}]의 별칭이 '{new_alias}'(으)로 변경되었습니다.")
+        else:
+            print("❌ 해당 계좌를 찾을 수 없거나 수정 권한이 없습니다.")
+    except Exception as e:
+        print(f"❌ 수정 중 오류 발생: {e}")
+    finally:
+        conn.close()
+
+def delete_account(session):
+    print("\n--- 계좌 삭제 ---")
+    acc_num = input("삭제할 계좌번호: ").strip()
+    
+    confirm = input(f"⚠️ 계좌[{acc_num}] 삭제 시 모든 거래 내역이 함께 사라집니다. 진행하시겠습니까? (Y/N): ")
+    if confirm.upper() != 'Y':
+        print("삭제가 취소되었습니다.")
+        return
+
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        # 보안을 위해 본인 소유의 계좌인지 user_no로 다시 한번 확인 후 삭제
+        sql = "DELETE FROM Accounts WHERE account_num = :1 AND user_no = :2"
+        cursor.execute(sql, [acc_num, session['user_no']])
+        
+        if cursor.rowcount > 0:
+            conn.commit()
+            print(f"✅ 계좌[{acc_num}]가 성공적으로 삭제되었습니다.")
+        else:
+            print("❌ 계좌번호가 틀렸거나 삭제 권한이 없습니다.")
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ 삭제 중 오류 발생: {e}")
+    finally:
+        conn.close()

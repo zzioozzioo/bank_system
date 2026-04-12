@@ -133,7 +133,7 @@ def transfer_money(user_session):
         row = cursor.fetchone()
         
         if not row:
-            print("❌ [{from_bank}] {from_acc} 계좌는 본인 소유가 아닙니다.")
+            print(f"❌ [{from_bank}] {from_acc} 계좌는 본인 소유가 아닙니다.")
             return
         
         if row[0] < amount:

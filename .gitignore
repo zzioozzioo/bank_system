@@ -1,0 +1,20 @@
+# --- Python 관련 ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# --- DB 및 설정 관련 (중요!) ---
+# DB 접속 정보가 담긴 파일은 절대 올리면 안 됩니다.
+db_config.py
+config.json
+*.log
+
+# --- IDE 관련 ---
+.vscode/
+.idea/
+
+# --- OS 관련 ---
+.DS_Store
+Thumbs.db

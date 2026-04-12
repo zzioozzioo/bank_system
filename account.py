@@ -109,11 +109,3 @@ def get_my_accounts(user_session):
         print(f"❌ 조회 중 오류 발생: {e}")
     finally:
         conn.close()
-
-# TODO: 계좌 별칭 수정 기능
-# TODO: 계좌 생성, 등록, 수정, 삭제, 조회 기능
-# TODO: 계좌번호로 계좌 정보 검색 기능
-# TODO: 전체 계좌정보 리스트 검색 기능
-# TODO: 별칭별, 계좌번호별, 은행별 계좌정보 리스트 검색
-
-# TODO: 관리자 메뉴 생성 -> 사용자 정보 조회, 수정, 삭제

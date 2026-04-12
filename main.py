@@ -1,8 +1,10 @@
 from auth import register, login
+from admin import admin_menu
 from account import create_account, get_my_accounts
 from transaction import deposit_money, withdraw_money, transfer_money, get_transaction_history
 
 def main_menu():
+
     while True:
         print("\n===== 통합계좌 관리시스템 =====")
         print("1. 회원가입")
@@ -10,17 +12,24 @@ def main_menu():
         print("3. 종료")
         print("==============================")
         
-        choice = input("선택: ")
+        choice = input("선택: ").strip()
         
         if choice == '1':
             register()
         elif choice == '2':
             user_session = login()
+
             if user_session:
-                bank_menu(user_session)
+                if user_session['is_admin']:
+                    admin_menu()
+                else: 
+                    bank_menu(user_session)
+
         elif choice == '3':
             print("프로그램을 종료합니다.")
             break
+        else:
+            print("잘못된 입력입니다. 다시 선택해 주세요.")
 
 def bank_menu(user_session):
     while True:
@@ -55,3 +64,14 @@ def bank_menu(user_session):
 
 if __name__ == "__main__":
     main_menu()
+
+# 사용자
+# TODO: 계좌 별칭 수정 기능
+# TODO: 계좌 생성, 등록, 수정, 삭제, 조회 기능
+# TODO: 계좌번호로 계좌 정보 검색 기능
+# TODO: 전체 계좌정보 리스트 검색 기능
+# TODO: 별칭별, 계좌번호별, 은행별 계좌정보 리스트 검색
+
+# 관리자
+# TODO: 관리자 메뉴 생성 -> 사용자 정보 조회, 수정, 삭제
+# TODO: DB에 관리자 계정 생성해두기

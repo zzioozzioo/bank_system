@@ -4,7 +4,12 @@ from db_config import get_connection
 
 def register():
     print("\n--- 회원가입 ---")
-    u_id = input("아이디: ").strip()
+    u_id = input("아이디: ").strip().lower() # 소문자로 비교
+
+    if u_id == 'admin':
+        print("❌ 'admin'은 관리자 전용 아이디입니다. 다른 아이디를 입력해주세요.")
+        return
+
     u_pw = getpass.getpass("비밀번호: ").strip()
     u_pw_confirm = getpass.getpass("비밀번호 확인: ").strip()
     u_name = input("이름: ").strip()
@@ -49,11 +54,12 @@ def login():
         cursor = conn.cursor()
         sql = "SELECT user_no, user_id, user_name FROM Users WHERE user_id = :1 AND user_pw = :2"
         cursor.execute(sql, [u_id, u_pw])
-        user = cursor.fetchone()
+        row = cursor.fetchone()
 
-        if user:
-            print(f"✅ {user[2]}님 환영합니다!")
-            return {"user_no": user[0], "user_id": user[1], "user_name": user[2]}
+        if row:
+            is_admin = (u_id == 'admin')
+            print(f"✅ {row[2]}님 환영합니다!" + ("\n관리자 모드를 실행합니다." if is_admin else ""))
+            return {"user_no": row[0], "user_id": row[1], "user_name": row[2], "is_admin": is_admin}
         else:
             print("❌ 아이디/비밀번호를 확인하세요.")
             return None

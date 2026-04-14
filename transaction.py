@@ -1,3 +1,4 @@
+import oracledb
 from db_config import get_connection
 
 def deposit_money(user_session):
@@ -175,6 +176,103 @@ def transfer_money(user_session):
         print(f"❌ 이체 중 오류 발생: {e}")
     finally:
         conn.close()
+
+def transfer_to_friend(user_session):
+    print("\n--- [타행 계좌이체] ---")
+
+    my_bank = input("내 은행명: ").strip()
+    if not my_bank.endswith("은행"): my_bank += "은행"
+
+    my_acc = input("내 계좌번호: ").strip()
+
+    friend_acc = input("상대방 계좌번호: ").strip()
+    amount = int(input("이체 금액: "))
+
+    # 1. 내 DB와 상대방 DB 연결 객체를 각각 생성
+    my_conn = get_connection()
+    
+    # 상대방 접속 정보 (상대방이 알려준 정보를 여기에 넣습니다)
+    friend_db_info = {
+        'user': 'c##bank',
+        'password': 'bank',
+        'dsn': '172.31.57.146:1521/FREE' # 상대방 IP 주소
+    }
+    
+    try:
+        friend_conn = oracledb.connect(
+            user=friend_db_info['user'], 
+            password=friend_db_info['password'], 
+            dsn=friend_db_info['dsn']
+        )
+        
+        my_cursor = my_conn.cursor()
+        friend_cursor = friend_conn.cursor()
+
+        # [STEP 1] 내 계좌 잔액 확인 및 출금
+        my_sql = """
+                SELECT balance FROM Accounts 
+                WHERE bank_name = :1 AND account_num = :2 AND owner_no = :3        
+        """
+        my_cursor.execute(my_sql, [my_bank, my_acc, user_session['user_no']])
+        result = my_cursor.fetchone()
+
+        if not result:
+            print(f"❌ 입력하신 {my_bank}의 {my_acc} 계좌를 찾을 수 없습니다.")
+            return
+
+        my_balance = result[0]
+        if my_balance < amount:
+            print(f"❌ 잔액이 부족합니다. (현재 잔액: {my_balance:,}원)")
+            return
+        # 내 DB 출금
+        sql_withdraw = """
+        UPDATE Accounts SET balance = balance - :1 WHERE bank_name = :2 AND account_num = :3
+        """
+        my_cursor.execute(sql_withdraw, [amount, my_bank, my_acc])
+
+        # [STEP 2] 상대방 DB 입금
+        # 주의: 상대방 테이블의 컬럼명(ACCOUNT_NUM, BALANCE 등)이 나와 같은지 확인 필요!
+        friend_sql = """
+                    UPDATE Accounts SET balance = balance + :1 WHERE account_number = :2
+        """
+        friend_cursor.execute(friend_sql, [amount, friend_acc])
+
+        if friend_cursor.rowcount == 0:
+            raise Exception("상대방 계좌번호가 존재하지 않습니다.")
+        
+        # [STEP 3] 거래 내역(Transactions) 기록 추가
+        # 1. 내 DB에 기록 (출금 내역)
+        my_log_sql = """
+            INSERT INTO Transactions (from_acc, to_acc, amount, t_type) 
+            VALUES (:1, :2, :3, '타행이체출금')
+        """
+        my_cursor.execute(my_log_sql, [my_acc, friend_acc, amount])
+
+        # # 2. 상대방 DB에 기록 (입금 내역)
+        # friend_log_sql = """
+        #     INSERT INTO Transactions (from_acc, to_acc, amount, t_type) 
+        #     VALUES (:1, :2, :3, '타행이체입금')
+        # """
+        # # 상대방 입장에서는 내 계좌에서 온 것이므로 from_acc에 내 계좌번호를 넣습니다.
+        # friend_cursor.execute(friend_log_sql, [my_acc, friend_acc, amount])
+
+
+        # [STEP 4] 양쪽 DB 모두 확정 (Commit)
+        my_conn.commit()
+        friend_conn.commit()
+        print(f"✅ {friend_acc}님께 {amount}원 이체 완료!")
+
+    except Exception as e:
+        # 어느 한쪽이라도 에러나면 양쪽 다 취소하여 돈이 증발하는 것 방지
+        my_conn.rollback()
+        if 'friend_conn' in locals():
+            friend_conn.rollback()
+        print(f"❌ 이체 실패: {e}")
+        
+    finally:
+        my_conn.close()
+        if 'friend_conn' in locals():
+            friend_conn.close()
 
 def get_transaction_history(user_session):
     def pad_korean(text, total_len):

@@ -1,7 +1,7 @@
 from auth import register, login
 from admin import admin_menu
 from account import create_account, get_my_accounts, manage_account
-from transaction import deposit_money, withdraw_money, transfer_money, get_transaction_history
+from transaction import deposit_money, withdraw_money, transfer_money, transfer_to_friend, get_transaction_history
 
 def main_menu():
 
@@ -40,8 +40,9 @@ def bank_menu(user_session):
         print("4. 입금")
         print("5. 출금")
         print("6. 계좌이체")
-        print("7. 거래내역 조회")
-        print("8. 로그아웃")
+        print("7. 타행계좌이체")
+        print("8. 거래내역 조회")
+        print("9. 로그아웃")
         
         choice = input("선택: ")
         if choice == '1':
@@ -57,8 +58,10 @@ def bank_menu(user_session):
         elif choice == '6':
             transfer_money(user_session)
         elif choice == '7':
-            get_transaction_history(user_session)
+            transfer_to_friend(user_session)
         elif choice == '8':
+            get_transaction_history(user_session)
+        elif choice == '9':
             print("로그아웃 되었습니다.")
             break
         else:
@@ -67,13 +70,4 @@ def bank_menu(user_session):
 if __name__ == "__main__":
     main_menu()
 
-# 사용자
-# TODO: [O] 계좌 별칭 수정 기능
-# TODO: [O] 계좌 생성, 등록, 수정, 삭제, 조회 기능
-# TODO: [O] 계좌번호로 계좌 정보 검색 기능
-# TODO: [O] 전체 계좌정보 리스트 검색 기능
-# TODO: [O] 별칭별, 계좌번호별, 은행별 계좌정보 리스트 검색
-
-# 관리자
-# TODO: [O] 관리자 메뉴 생성 -> 사용자 정보 조회, 수정, 삭제
-# TODO: [O] DB에 관리자 계정 생성해두기
+# TODO: 콘솔창 출력 형식 통일하기

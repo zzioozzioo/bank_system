@@ -1,5 +1,6 @@
 import oracledb
 from db_config import get_connection
+from prettytable import PrettyTable
 
 def create_account(user_session):
 
@@ -102,14 +103,25 @@ def execute_account_search(sql, params):
         cursor = conn.cursor()
         cursor.execute(sql, params)
         rows = cursor.fetchall()
+
+        table = PrettyTable()
+        table.field_names = ["계좌번호", "은행", "별칭", "잔액"]
         
         if not rows:
             print("\n[!] 조회된 계좌가 없습니다.")
         else:
-            print(f"\n{'계좌번호':<20} | {'은행':<10} | {'별칭':<15} | {'잔액':>10}")
-            print("-" * 80)
             for row in rows:
-                print(f"{row[0]:<20} | {row[1]:<10} | {row[2]:<15} | {row[3]:>10,}원")
+                formatted_row = list(row)
+                formatted_row[3] = f"{row[3]:,}원"
+                table.add_row(formatted_row)
+            
+            table.align["계좌번호"] = "l"
+            table.align["은행"] = "l"
+            table.align["별칭"] = "l"
+            table.align["잔액"] = "r"
+
+            print(table)
+
     except Exception as e:
         print(f"[!] 조회 중 오류 발생: {e}")
     finally:

@@ -1,5 +1,6 @@
 import oracledb
 from db_config import get_connection
+from prettytable import PrettyTable
 
 def deposit_money(user_session):
     print("\n--- 입금하기 ---")
@@ -262,15 +263,6 @@ def transfer_to_friend(user_session):
             friend_conn.close()
 
 def get_transaction_history(user_session):
-    # TODO: 공통 함수 빼기
-    def pad_korean(text, total_len):
-        k_count = 0
-        for char in text:
-            if ord('가') <= ord(char) <= ord('힣'): # 한글 범위 체크
-                k_count += 1
-        return text + ' ' * (total_len - len(text) - k_count)
-
-
     print(f"\n--- [{user_session['user_name']}]님의 거래 내역 ---")
     
     conn = get_connection()
@@ -293,32 +285,32 @@ def get_transaction_history(user_session):
             print("[!] 거래 내역이 존재하지 않습니다.")
             return
 
-        header_date = "날짜".ljust(16)
-        header_type = pad_korean("유형", 10)
-        header_amt = "금액".rjust(11)
-        print(f"{header_date} | {header_type} | {header_amt} | 상세 내용")
-        print("-" * 85)
+        table = PrettyTable()
+        table.field_names = ["거래일시", "유형", "금액", "상세 내용"]
 
         for row in rows:
             t_date, t_type, amount, f_bank, f_acc, t_bank, t_acc = row
             
             detail = ""
             if t_type == '입금':
-                detail = f"[{t_bank}] {t_acc} 계좌로 입금"
+                detail = f"[{t_bank}] {t_acc} 입금"
             elif t_type == '출금':
-                detail = f"[{f_bank}] {f_acc} 계좌에서 출금"
-            elif t_type == '계좌이체':
-                detail = f"[{f_bank}] {f_acc} -> [{t_bank}] {t_acc}"
+                detail = f"[{f_bank}] {f_acc} 출금"
+            elif t_type in ['계좌이체', '타행이체출금', '타행이체입금']:
+                detail = f"{f_acc} -> {t_acc}"
             elif t_type == '신규개설':
-                bank_info = f"[{t_bank}] " if t_bank else ""
-                detail = f"{bank_info}{t_acc} 계좌 신규 생성"
+                detail = f"[{t_bank}] {t_acc} 신규 생성"
             else:
                 detail = f"{t_type} 내역"
 
-            v_date = t_date.ljust(18)
-            v_type = pad_korean(t_type, 10) 
-            v_amt = f"{amount:,}원".rjust(12)
-            print(f"{v_date} | {v_type} | {v_amt} | {detail}")
+            table.add_row([t_date, t_type, f"{amount:,}원", detail])
+
+        table.align["거래일시"] = "l"
+        table.align["유형"] = "c"
+        table.align["금액"] = "r"
+        table.align["상세 내용"] = "l"
+
+        print(table)
 
     except Exception as e:
         print(f"[!] 조회 중 오류 발생: {e}")

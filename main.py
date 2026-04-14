@@ -69,5 +69,3 @@ def bank_menu(user_session):
 
 if __name__ == "__main__":
     main_menu()
-
-# TODO: 콘솔창 출력 형식 통일하기

@@ -15,9 +15,13 @@ def list_all_users():
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        # 가입일 역순으로 전체 사용자 조회
-        # TODO: 사용자 리스트에서 관리자는 제외
-        cursor.execute("SELECT user_no, user_id, user_name FROM Users ORDER BY user_no DESC")
+        sql = """
+        SELECT user_no, user_id, user_name 
+        FROM Users 
+        WHERE is_admin = 0
+        ORDER BY user_no DESC
+        """
+        cursor.execute(sql)
         users = cursor.fetchall()
 
         print(f"\n{'번호':<6} | {'아이디':<15} | {'이름'}")
@@ -31,7 +35,7 @@ def update_user_info():
     target_id = input("수정할 사용자의 ID: ").strip()
 
     if target_id.lower() == 'admin':
-        print("❌ 관리자 계정은 수정할 수 없습니다.")
+        print("[!] 관리자 계정은 수정할 수 없습니다.")
         return
 
     # TODO: 이름 변경은 고려해 보기
@@ -47,19 +51,18 @@ def update_user_info():
             cursor.execute("UPDATE Users SET user_pw = :1 WHERE user_id = :2", [new_pw, target_id])
         
         conn.commit()
-        print(f"✅ {target_id} 사용자의 정보가 업데이트되었습니다.")
+        print(f"{target_id} 사용자의 정보가 업데이트되었습니다.")
     finally:
         conn.close()
 
 def delete_user():
-    target_id = input("⚠️ 삭제할 사용자의 ID: ")
+    target_id = input("삭제할 사용자의 ID: ")
 
     if target_id.lower() == 'admin':
-        print("❌ 관리자 계정은 삭제할 수 없습니다.")
+        print("[!] 관리자 계정은 삭제할 수 없습니다.")
         return
 
-    confirm = input(f"정말로 {target_id} 사용자와 관련된 모든 데이터를 삭제하시겠습니까? (Y/N): ").strip()
-    # TODO: 입력값이 y/n가 아닌 경우 예외처리
+    confirm = input(f"[!] 정말로 {target_id} 사용자와 관련된 모든 데이터를 삭제하시겠습니까? (Y/N): ").strip()
     if confirm.upper() != 'Y': 
         print("삭제가 취소되었습니다.")
         return
@@ -70,13 +73,13 @@ def delete_user():
         cursor.execute("DELETE FROM Users WHERE user_id = :1", [target_id])
 
         if cursor.rowcount == 0:
-            print("❌ 해당 ID의 사용자를 찾을 수 없습니다.")
+            print("[!] 해당 ID의 사용자를 찾을 수 없습니다.")
         else:
             conn.commit()
-            print(f"✅ {target_id} 사용자가 성공적으로 삭제되었습니다.")
+            print(f"[!] {target_id} 사용자가 성공적으로 삭제되었습니다.")
 
     except Exception as e:
         if conn: conn.rollback() # 오류 발생 시 원상 복구
-        print(f"❌ 시스템 오류로 삭제에 실패했습니다: {e}")
+        print(f"[!] 시스템 오류로 삭제에 실패했습니다: {e}")
     finally:
         conn.close()

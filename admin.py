@@ -1,4 +1,5 @@
 from db_config import get_connection
+from utils import print_all_users
 
 def admin_menu():
     while True:
@@ -24,10 +25,14 @@ def list_all_users():
         cursor.execute(sql)
         users = cursor.fetchall()
 
-        print(f"\n{'번호':<6} | {'아이디':<15} | {'이름'}")
-        print("-" * 40)
-        for user in users:
-            print(f"{user[0]:<6} | {user[1]:<15} | {user[2]}")
+        if not users:
+            print("\n[!] 등록된 사용자가 없습니다.")
+            return
+
+        print_all_users(users)
+        
+    except Exception as e:
+        print(f"[!] 사용자 목록 조회 중 오류가 발생했습니다: {e}")
     finally:
         conn.close()
 

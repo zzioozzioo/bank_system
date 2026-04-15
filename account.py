@@ -1,7 +1,5 @@
-import oracledb
 from db_config import get_connection
-from prettytable import PrettyTable
-from utils import generate_account_number
+from utils import generate_account_number, print_account_info
 
 def create_account(user_session):
 
@@ -14,45 +12,48 @@ def create_account(user_session):
     if bank_name not in banks:
         print("[!] 등록 가능한 은행이 아닙니다.")
         return
-
-    account_num = generate_account_number(cursor, bank_name)
-    print(f"생성된 계좌번호: {account_num}")
     
-    alias = input("계좌 별칭: ")
-    
-    try:
-        initial_deposit = int(input("최초 입금액(1,000원 이상): "))
-        if initial_deposit < 1000:
-            print("[!] 최초 생성 시 1,000원 이상 입금해야 합니다.")
-            return
-    except ValueError:
-        print("[!] 숫자만 입력 가능합니다.")
-        return
-
     conn = get_connection()
     if not conn: return
 
     try:
         cursor = conn.cursor()
-        # owner_no에 로그인 세션의 user_no를 넣음으로써 소유자 연결
+
+        account_num = generate_account_number(cursor, bank_name)
+        print(f"생성된 계좌번호: {account_num}")
+        
+        alias = input("계좌 별칭: ")
+        
+        try:
+            initial_deposit = int(input("최초 입금액(1,000원 이상): "))
+            if initial_deposit < 1000:
+                print("[!] 최초 생성 시 1,000원 이상 입금해야 합니다.")
+                return
+        except ValueError:
+            print("[!] 숫자만 입력 가능합니다.")
+            return
+
         sql = """
-        INSERT INTO Accounts (account_num, bank_name, owner_no, balance, alias) 
-        VALUES (:1, :2, :3, :4, :5)
+            INSERT INTO Accounts (account_num, bank_name, owner_no, balance, alias) 
+            VALUES (:1, :2, :3, :4, :5)
         """
         cursor.execute(sql, [account_num, bank_name, user_session['user_no'], initial_deposit, alias])
-        
+            
         sql_log = """
-        INSERT INTO Transactions (to_bank, to_acc, amount, t_type) 
-        VALUES (:1, :2, :3, :4)
+            INSERT INTO Transactions (to_bank, to_acc, amount, t_type) 
+            VALUES (:1, :2, :3, :4)
         """
         cursor.execute(sql_log, [bank_name, account_num, initial_deposit, '신규개설'])
-        
+            
         conn.commit()
-        print(f"[!] {bank_name}({account_num}) 계좌가 등록되었습니다!")
-    except oracledb.IntegrityError:
-        print("[!] 유효하지 않은 계좌번호입니다.")
+
+        print("\n계좌 생성이 완료되었습니다.")
+            
+    except Exception as e:
+        print("[!] 계좌 등록 중 오류가 발생했습니다: {e}")
+        conn.rollback()
     finally:
-        conn.close()
+            conn.close()
 
 def get_my_accounts(user_session):
     while True:
@@ -94,37 +95,18 @@ def get_my_accounts(user_session):
             print("[!] 잘못된 선택입니다.")
             continue
 
-        execute_account_search(sql, params)
-
-def execute_account_search(sql, params):
-    conn = get_connection()
+        conn = get_connection()
     try:
         cursor = conn.cursor()
         cursor.execute(sql, params)
-        rows = cursor.fetchall()
+        infos = cursor.fetchall()
 
-        table = PrettyTable()
-        table.field_names = ["계좌번호", "은행", "별칭", "잔액"]
-        
-        if not rows:
-            print("\n[!] 조회된 계좌가 없습니다.")
-        else:
-            for row in rows:
-                formatted_row = list(row)
-                formatted_row[3] = f"{row[3]:,}원"
-                table.add_row(formatted_row)
-            
-            table.align["계좌번호"] = "l"
-            table.align["은행"] = "l"
-            table.align["별칭"] = "l"
-            table.align["잔액"] = "r"
-
-            print(table)
+        print_account_info(infos)
 
     except Exception as e:
         print(f"[!] 조회 중 오류 발생: {e}")
     finally:
-        conn.close()
+        conn.close()    
     
 def manage_account(user_session):
     while True:

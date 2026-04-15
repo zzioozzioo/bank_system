@@ -1,6 +1,6 @@
 import oracledb
 from db_config import get_connection
-from prettytable import PrettyTable
+from utils import print_transaction_history
 
 def deposit_money(user_session):
     print("\n--- 입금하기 ---")
@@ -41,7 +41,7 @@ def deposit_money(user_session):
         print(f"{bank_name} {account_num} 계좌로 {amount:,}원 입금이 완료되었습니다.")
     except Exception as e:
         conn.rollback()
-        print(f"[!] 오류 발생: {e}")
+        print(f"[!] 오류가 발생했습니다: {e}")
     finally:
         conn.close()
 
@@ -279,40 +279,15 @@ def get_transaction_history(user_session):
         ORDER BY t_date ASC
         """
         cursor.execute(sql, [user_session['user_no'], user_session['user_no']])
-        rows = cursor.fetchall()
+        histories = cursor.fetchall()
 
-        if not rows:
+        if not histories:
             print("[!] 거래 내역이 존재하지 않습니다.")
             return
 
-        table = PrettyTable()
-        table.field_names = ["거래일시", "유형", "금액", "상세 내용"]
-
-        for row in rows:
-            t_date, t_type, amount, f_bank, f_acc, t_bank, t_acc = row
-            
-            detail = ""
-            if t_type == '입금':
-                detail = f"[{t_bank}] {t_acc} 입금"
-            elif t_type == '출금':
-                detail = f"[{f_bank}] {f_acc} 출금"
-            elif t_type in ['계좌이체', '타행이체출금', '타행이체입금']:
-                detail = f"{f_acc} -> {t_acc}"
-            elif t_type == '신규개설':
-                detail = f"[{t_bank}] {t_acc} 신규 생성"
-            else:
-                detail = f"{t_type} 내역"
-
-            table.add_row([t_date, t_type, f"{amount:,}원", detail])
-
-        table.align["거래일시"] = "l"
-        table.align["유형"] = "c"
-        table.align["금액"] = "r"
-        table.align["상세 내용"] = "l"
-
-        print(table)
+        print_transaction_history(histories)
 
     except Exception as e:
-        print(f"[!] 조회 중 오류 발생: {e}")
+        print(f"[!] 조회 중 오류가 발생했습니다: {e}")
     finally:
         conn.close()

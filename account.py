@@ -1,5 +1,5 @@
 from db_config import get_connection
-from utils import generate_account_number, print_account_info, validate_initial_deposit, confirm_delete_action
+from utils import generate_account_number, print_account_info, validate_initial_deposit, confirm_delete_action, add_bank_name
 
 def create_account(user_session):
 
@@ -8,6 +8,7 @@ def create_account(user_session):
     banks = ['하나은행', '우리은행', '국민은행', '신한은행', '기업은행']
     print(f"가능한 은행: {', '.join(banks)}")
     bank_name = input("은행명 입력: ")
+    add_bank_name(bank_name)
     
     if bank_name not in banks:
         print("[!] 등록 가능한 은행이 아닙니다.")
@@ -96,17 +97,19 @@ def get_my_accounts(user_session):
             continue
 
         conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql, params)
-        infos = cursor.fetchall()
+        if not conn: continue
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql, params)
+            infos = cursor.fetchall()
 
-        print_account_info(infos)
+            print_account_info(infos)
 
-    except Exception as e:
-        print(f"[!] 조회 중 오류 발생: {e}")
-    finally:
-        conn.close()    
+        except Exception as e:
+            print(f"[!] 조회 중 오류 발생: {e}")
+        finally:
+            conn.close()    
+    
     
 def manage_account(user_session):
     while True:
@@ -135,7 +138,7 @@ def update_account(user_session):
     try:
         cursor = conn.cursor()
         # 본인의 계좌만 수정할 수 있도록 user_no 조건 포함
-        sql = "UPDATE Accounts SET account_alias = :1 WHERE account_num = :2 AND user_no = :3"
+        sql = "UPDATE Accounts SET alias = :1 WHERE account_num = :2 AND owner_no = :3"
         cursor.execute(sql, [new_alias, acc_num, user_session['user_no']])
         
         if cursor.rowcount > 0:
@@ -161,7 +164,7 @@ def delete_account(user_session):
     try:
         cursor = conn.cursor()
         # 보안을 위해 본인 소유의 계좌인지 user_no로 다시 한번 확인 후 삭제
-        sql = "DELETE FROM Accounts WHERE account_num = :1 AND user_no = :2"
+        sql = "DELETE FROM Accounts WHERE account_num = :1 AND owner_no = :2"
         cursor.execute(sql, [acc_num, user_session['user_no']])
         
         if cursor.rowcount > 0:

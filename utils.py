@@ -50,7 +50,7 @@ def print_account_info(infos):
         for info in infos:
             formatted_info = list(info)
             formatted_info[3] = f"{info[3]:,}원"
-            table.add_info(formatted_info)
+            table.add_row(formatted_info)
             
         table.align["계좌번호"] = "l"
         table.align["은행"] = "l"
@@ -78,7 +78,7 @@ def print_transaction_history(histories):
         else:
             detail = f"{t_type} 내역"
 
-        table.add_history([t_date, t_type, f"{amount:,}원", detail])
+        table.add_row([t_date, t_type, f"{amount:,}원", detail])
 
     table.align["거래일시"] = "l"
     table.align["유형"] = "c"
@@ -94,14 +94,15 @@ def validate_initial_deposit(initial_deposit):
     return True
 
 def validate_amount(amount):
-    try:
-        if amount <= 0:
-            print("[!] 0원 이하의 금액을 입력해 주세요.")
-            return False
-        return True
-    except ValueError: 
+    if not isinstance(amount, (int, float)):
         print("[!] 숫자만 입력 가능합니다.")
         return False
+        
+    if amount < 1000:
+        print("[!] 최소 1,000원 이상 입력해야 합니다.")
+        return False
+        
+    return True
 
 def validate_required_fields(u_id, u_pw, u_name):
     if not (u_id and u_pw and u_name):
@@ -129,3 +130,7 @@ def validate_balance(balance, amount):
 def confirm_delete_action(message):
     confirm = input(f"{message} (Y/N): ").strip().upper()
     return confirm == 'Y'
+
+def add_bank_name(bank_name):
+    if not bank_name.endswith("은행"):
+        bank_name += "은행"

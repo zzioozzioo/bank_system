@@ -65,7 +65,7 @@ def bank_menu(user_session):
             print("로그아웃 되었습니다.")
             break
         else:
-            print(f"1~8번 메뉴 중에 선택해 주세요.")
+            print(f"1~9번 메뉴 중에 선택해 주세요.")
 
 if __name__ == "__main__":
     main_menu()

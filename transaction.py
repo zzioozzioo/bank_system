@@ -1,10 +1,11 @@
 import oracledb
 from db_config import get_connection
-from utils import print_transaction_history, validate_amount, validate_balance
+from utils import print_transaction_history, validate_amount, validate_balance, add_bank_name
 
 def deposit_money(user_session):
     print("\n--- 입금하기 ---")
     bank_name = input("은행명: ")
+    add_bank_name(bank_name)
     account_num = input("입금할 계좌번호: ")
     amount = int(input("입금 금액: "))
     if not validate_amount(amount):
@@ -43,6 +44,7 @@ def deposit_money(user_session):
 def withdraw_money(user_session):
     print("\n--- 출금하기 ---")
     bank_name = input("은행명: ")
+    add_bank_name(bank_name)
     account_num = input("출금할 계좌번호: ")
     amount = int(input("출금 금액: "))
     if not validate_amount(amount):
@@ -63,10 +65,10 @@ def withdraw_money(user_session):
         row = cursor.fetchone()
         
         if not row:
-            print("[!] [{bank_name}]에 해당 계좌가 없거나 본인 소유가 아닙니다.")
+            print(f"[!] [{bank_name}]에 해당 계좌가 없거나 본인 소유가 아닙니다.")
             return
         
-        if validate_balance(row[0], amount):
+        if not validate_balance(row[0], amount):
             return
 
         # 2. 잔액 업데이트
@@ -95,8 +97,10 @@ def transfer_money(user_session):
     print("\n--- 계좌이체 ---")
 
     from_bank = input("내 은행명: ")
+    add_bank_name(from_bank)
     from_acc = input("내 계좌번호(출금): ")
     to_bank = input("상대방 은행명: ")
+    add_bank_name(to_bank)
     to_acc = input("상대방 계좌번호(입금): ")
     amount = int(input("이체 금액: "))
     if not validate_amount(amount):
@@ -143,11 +147,17 @@ def transfer_money(user_session):
             return
 
         # 거래내역 기록 (순서: 보낸은행, 보낸계좌, 받는은행, 받는계좌, 금액)
-        sql_log = """
+        sql_log_from = """
         INSERT INTO Transactions (from_bank, from_acc, to_bank, to_acc, amount, t_type) 
-        VALUES (:1, :2, :3, :4, :5, '계좌이체')
+        VALUES (:1, :2, :3, :4, :5, '계좌이체(출금)')
         """
-        cursor.execute(sql_log, [from_bank, from_acc, to_bank, to_acc, amount])
+        cursor.execute(sql_log_from, [from_bank, from_acc, to_bank, to_acc, amount])
+
+        sql_log_to = """
+        INSERT INTO Transactions (from_bank, from_acc, to_bank, to_acc, amount, t_type) 
+        VALUES (:1, :2, :3, :4, :5, '계좌이체(입금)')
+        """
+        cursor.execute(sql_log_to, [from_bank, from_acc, to_bank, to_acc, amount])
         
         # 모든 작업이 성공했을 때만 확정
         conn.commit()
@@ -163,7 +173,7 @@ def transfer_to_friend(user_session):
     print("\n--- [타행 계좌이체] ---")
 
     my_bank = input("내 은행명: ").strip()
-    if not my_bank.endswith("은행"): my_bank += "은행"
+    add_bank_name(my_bank)
     my_acc = input("내 계좌번호: ").strip()
 
     friend_acc = input("상대방 계좌번호: ").strip()
@@ -200,7 +210,7 @@ def transfer_to_friend(user_session):
             return
 
         my_balance = result[0]
-        if validate_balance(my_balance, amount):
+        if not validate_balance(my_balance, amount):
             return
         
         # 내 DB 출금

@@ -1,6 +1,7 @@
 import oracledb
 from db_config import get_connection
 from prettytable import PrettyTable
+from utils import generate_account_number
 
 def create_account(user_session):
 
@@ -14,10 +15,8 @@ def create_account(user_session):
         print("[!] 등록 가능한 은행이 아닙니다.")
         return
 
-    account_num = input("계좌번호 입력(숫자만): ")
-    if not account_num.isdigit():
-        print("[!] 계좌번호는 숫자만 입력 가능합니다.")
-        return
+    account_num = generate_account_number(cursor, bank_name)
+    print(f"생성된 계좌번호: {account_num}")
     
     alias = input("계좌 별칭: ")
     

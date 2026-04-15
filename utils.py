@@ -25,7 +25,6 @@ def generate_account_number(cursor, bank_name):
         if count == 0:
             return new_acc
         
-
 def print_all_users(users):
     table = PrettyTable()
     
@@ -60,7 +59,6 @@ def print_account_info(infos):
 
         print(table)
 
-
 def print_transaction_history(histories):
     table = PrettyTable()
     table.field_names = ["거래일시", "유형", "금액", "상세 내용"]
@@ -88,3 +86,46 @@ def print_transaction_history(histories):
     table.align["상세 내용"] = "l"
 
     print(table)
+
+def validate_initial_deposit(initial_deposit):
+    if initial_deposit < 1000:
+        print("[!] 최초 생성 시 1,000원 이상 입금해야 합니다.")
+        return False
+    return True
+
+def validate_amount(amount):
+    try:
+        if amount <= 0:
+            print("[!] 0원 이하의 금액을 입력해 주세요.")
+            return False
+        return True
+    except ValueError: 
+        print("[!] 숫자만 입력 가능합니다.")
+        return False
+
+def validate_required_fields(u_id, u_pw, u_name):
+    if not (u_id and u_pw and u_name):
+        print("[!] 모든 항목을 입력해야 합니다.")
+        return False
+    return True
+
+def validate_password(pw, pw_confirm):
+    if pw != pw_confirm:
+        print("[!] 비밀번호가 일치하지 않습니다. 다시 시도해주세요.")
+        return False
+    
+    if len(pw) < 4:
+        print("[WARN] 비밀번호는 최소 4자 이상이어야 합니다.")
+        return False
+    
+    return True
+
+def validate_balance(balance, amount):
+    if balance < amount:
+        print(f"[!] 잔액이 부족합니다. (현재 잔액: {balance:,}원)")
+        return False
+    return True
+
+def confirm_delete_action(message):
+    confirm = input(f"{message} (Y/N): ").strip().upper()
+    return confirm == 'Y'

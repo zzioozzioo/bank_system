@@ -1,5 +1,5 @@
 from db_config import get_connection
-from utils import generate_account_number, print_account_info
+from utils import generate_account_number, print_account_info, validate_initial_deposit, confirm_delete_action
 
 def create_account(user_session):
 
@@ -26,9 +26,9 @@ def create_account(user_session):
         
         try:
             initial_deposit = int(input("최초 입금액(1,000원 이상): "))
-            if initial_deposit < 1000:
-                print("[!] 최초 생성 시 1,000원 이상 입금해야 합니다.")
+            if not validate_initial_deposit(initial_deposit):
                 return
+            
         except ValueError:
             print("[!] 숫자만 입력 가능합니다.")
             return
@@ -152,8 +152,8 @@ def delete_account(user_session):
     print("\n--- 계좌 삭제 ---")
     acc_num = input("삭제할 계좌번호: ").strip()
     
-    confirm = input(f"[!] 계좌[{acc_num}] 삭제 시 모든 거래 내역이 함께 사라집니다. 진행하시겠습니까? (Y/N): ")
-    if confirm.upper() != 'Y':
+    message = f"[!] 계좌[{acc_num}] 삭제 시 모든 거래 내역이 함께 사라집니다. 진행하시겠습니까?"
+    if not confirm_delete_action(message):
         print("삭제가 취소되었습니다.")
         return
 

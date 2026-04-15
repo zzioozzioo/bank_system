@@ -1,18 +1,13 @@
 import oracledb
 from db_config import get_connection
-from utils import print_transaction_history
+from utils import print_transaction_history, validate_amount, validate_balance
 
 def deposit_money(user_session):
     print("\n--- 입금하기 ---")
     bank_name = input("은행명: ")
     account_num = input("입금할 계좌번호: ")
-    try:
-        amount = int(input("입금 금액: "))
-        if amount <= 0:
-            print("[!] 0원 이하의 금액은 입금할 수 없습니다.")
-            return
-    except ValueError:
-        print("[!] 숫자만 입력 가능합니다.")
+    amount = int(input("입금 금액: "))
+    if not validate_amount(amount):
         return
 
     conn = get_connection()
@@ -49,13 +44,8 @@ def withdraw_money(user_session):
     print("\n--- 출금하기 ---")
     bank_name = input("은행명: ")
     account_num = input("출금할 계좌번호: ")
-    try:
-        amount = int(input("출금 금액: "))
-        if amount <= 0:
-            print("[!] 0원 이하의 금액은 출금할 수 없습니다.")
-            return
-    except ValueError:
-        print("[!] 숫자만 입력 가능합니다.")
+    amount = int(input("출금 금액: "))
+    if not validate_amount(amount):
         return
 
     conn = get_connection()
@@ -76,9 +66,7 @@ def withdraw_money(user_session):
             print("[!] [{bank_name}]에 해당 계좌가 없거나 본인 소유가 아닙니다.")
             return
         
-        current_balance = row[0]
-        if current_balance < amount:
-            print(f"[!] 잔액이 부족합니다. (현재 잔액: {current_balance:,}원)")
+        if validate_balance(row[0], amount):
             return
 
         # 2. 잔액 업데이트
@@ -110,14 +98,8 @@ def transfer_money(user_session):
     from_acc = input("내 계좌번호(출금): ")
     to_bank = input("상대방 은행명: ")
     to_acc = input("상대방 계좌번호(입금): ")
-    
-    try:
-        amount = int(input("이체 금액: "))
-        if amount <= 0:
-            print("[!] 0원 이하의 금액은 이체할 수 없습니다.")
-            return
-    except ValueError:
-        print("[!] 숫자만 입력 가능합니다.")
+    amount = int(input("이체 금액: "))
+    if not validate_amount(amount):
         return
 
     conn = get_connection()
@@ -138,8 +120,7 @@ def transfer_money(user_session):
             print(f"[!] [{from_bank}] {from_acc} 계좌는 본인 소유가 아닙니다.")
             return
         
-        if row[0] < amount:
-            print(f"[!] 잔액이 부족합니다. (현재 잔액: {row[0]:,}원)")
+        if not validate_balance(row[0], amount):
             return
 
         # 내 계좌 출금
@@ -219,8 +200,7 @@ def transfer_to_friend(user_session):
             return
 
         my_balance = result[0]
-        if my_balance < amount:
-            print(f"[!] 잔액이 부족합니다. (현재 잔액: {my_balance:,}원)")
+        if validate_balance(my_balance, amount):
             return
         
         # 내 DB 출금

@@ -1,5 +1,6 @@
 from db_config import get_connection
 from utils import print_all_users
+from utils import confirm_delete_action
 
 def admin_menu():
     while True:
@@ -67,8 +68,8 @@ def delete_user():
         print("[!] 관리자 계정은 삭제할 수 없습니다.")
         return
 
-    confirm = input(f"[!] 정말로 {target_id} 사용자와 관련된 모든 데이터를 삭제하시겠습니까? (Y/N): ").strip()
-    if confirm.upper() != 'Y': 
+    message = (f"[!] 정말로 {target_id} 사용자와 관련된 모든 데이터를 삭제하시겠습니까?")
+    if not confirm_delete_action(message): 
         print("삭제가 취소되었습니다.")
         return
 

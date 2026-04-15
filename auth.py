@@ -1,6 +1,7 @@
 import oracledb
 import getpass
 from db_config import get_connection
+from utils import validate_required_fields, validate_password
 
 def register():
     print("\n--- 회원가입 ---")
@@ -14,12 +15,10 @@ def register():
     u_pw_confirm = getpass.getpass("비밀번호 확인: ").strip()
     u_name = input("이름: ").strip()
 
-    if not (u_id and u_pw and u_name):
-        print("[!] 모든 항목을 입력해야 합니다.")
+    if not validate_required_fields(u_id, u_pw, u_name):
         return
     
-    if u_pw != u_pw_confirm:
-        print("[!] 비밀번호가 일치하지 않습니다. 다시 시도해주세요.")
+    if not validate_password(u_pw, u_pw_confirm):
         return
 
     conn = get_connection()

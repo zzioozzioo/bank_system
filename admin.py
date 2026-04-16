@@ -18,10 +18,16 @@ def list_all_users():
     try:
         cursor = conn.cursor()
         sql = """
-        SELECT user_no, user_id, user_name 
-        FROM Users 
-        WHERE is_admin = 0
-        ORDER BY user_no DESC
+        SELECT distinct
+            u.user_no, 
+            u.user_id, 
+            u.user_name, 
+            a.account_num, 
+            a.balance 
+        FROM Users u
+        JOIN Accounts a ON u.user_no = a.owner_no
+        WHERE u.is_admin = 0
+        ORDER BY u.user_no ASC
         """
         cursor.execute(sql)
         users = cursor.fetchall()
@@ -43,21 +49,47 @@ def update_user_info():
     if target_id.lower() == 'admin':
         print("[!] 관리자 계정은 수정할 수 없습니다.")
         return
-
-    # TODO: 이름 변경은 고려해 보기
-    new_name = input("새로운 이름(변경 없으면 엔터): ").strip()
-    new_pw = input("새로운 비밀번호(변경 없으면 엔터): ").strip()
-
+    
     conn = get_connection()
+    
     try:
         cursor = conn.cursor()
-        if new_name:
-            cursor.execute("UPDATE Users SET user_name = :1 WHERE user_id = :2", [new_name, target_id])
-        if new_pw:
-            cursor.execute("UPDATE Users SET user_pw = :1 WHERE user_id = :2", [new_pw, target_id])
+
+        cursor.execute("SELECT user_name, user_pw FROM Users WHERE user_id = :1", [target_id])
+        user = cursor.fetchone()
+
+        if not user:
+            print(f"[!] 존재하지 않는 사용자 ID입니다: {target_id}")
+            return 
         
-        conn.commit()
-        print(f"{target_id} 사용자의 정보가 업데이트되었습니다.")
+        current_name, current_pw = user
+        new_name = input("새로운 이름(변경 없으면 엔터): ").strip()
+        new_pw = input("새로운 비밀번호(변경 없으면 엔터): ").strip()
+
+        if not new_name and not new_pw:
+            print("[!] 입력값이 없어 업데이트를 취소합니다.")
+            return
+
+        updated = False
+
+        if new_name and new_name != current_name:
+            cursor.execute("UPDATE Users SET user_name = :1 WHERE user_id = :2", [new_name, target_id])
+            updated = True
+        
+        if new_pw and new_pw != current_pw:
+            cursor.execute("UPDATE Users SET user_pw = :1 WHERE user_id = :2", [new_pw, target_id])
+            updated = True
+
+        if updated:
+            conn.commit()
+            print(f"[*] {target_id} 사용자의 정보가 성공적으로 업데이트되었습니다.")
+        else:
+            print("[!] 기존 정보와 동일하여 업데이트를 취소합니다.")
+
+           
+    except Exception as e:
+        print(f"[!] 오류가 발생했습니다: {e}")
+        conn.rollback()
     finally:
         conn.close()
 
@@ -68,11 +100,6 @@ def delete_user():
         print("[!] 관리자 계정은 삭제할 수 없습니다.")
         return
 
-    message = (f"[!] 정말로 {target_id} 사용자와 관련된 모든 데이터를 삭제하시겠습니까?")
-    if not confirm_delete_action(message): 
-        print("삭제가 취소되었습니다.")
-        return
-
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -81,6 +108,10 @@ def delete_user():
         if cursor.rowcount == 0:
             print("[!] 해당 ID의 사용자를 찾을 수 없습니다.")
         else:
+            message = (f"[!] 정말로 {target_id} 사용자와 관련된 모든 데이터를 삭제하시겠습니까?")
+            if not confirm_delete_action(message): 
+                print("삭제가 취소되었습니다.")
+                return
             conn.commit()
             print(f"[!] {target_id} 사용자가 성공적으로 삭제되었습니다.")
 

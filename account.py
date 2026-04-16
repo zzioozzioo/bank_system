@@ -7,8 +7,8 @@ def create_account(user_session):
     
     banks = ['하나은행', '우리은행', '국민은행', '신한은행', '기업은행']
     print(f"가능한 은행: {', '.join(banks)}")
-    bank_name = input("은행명 입력: ")
-    add_bank_name(bank_name)
+     
+    bank_name = add_bank_name(input("은행명 입력: "))
     
     if bank_name not in banks:
         print("[!] 등록 가능한 은행이 아닙니다.")
@@ -58,7 +58,7 @@ def create_account(user_session):
 
 def get_my_accounts(user_session):
     while True:
-        print("\n--- 계좌 관리 ---")
+        print("\n--- 계좌 조회 ---")
         print("1. 전체 계좌 조회")
         print("2. 계좌번호로 검색")
         print("3. 별칭으로 검색")
@@ -138,14 +138,14 @@ def update_account(user_session):
     try:
         cursor = conn.cursor()
         # 본인의 계좌만 수정할 수 있도록 user_no 조건 포함
-        sql = "UPDATE Accounts SET alias = :1 WHERE account_num = :2 AND owner_no = :3"
-        cursor.execute(sql, [new_alias, acc_num, user_session['user_no']])
+        sql = "UPDATE Accounts SET alias = :1 WHERE account_num = :2 AND owner_no = :3 AND alias != :4"
+        cursor.execute(sql, [new_alias, acc_num, user_session['user_no'], new_alias])
         
         if cursor.rowcount > 0:
             conn.commit()
             print(f"계좌[{acc_num}]의 별칭이 '{new_alias}'(으)로 변경되었습니다.")
         else:
-            print("[!] 해당 계좌를 찾을 수 없거나 수정 권한이 없습니다.")
+            print("[!] 기존과 동일한 별칭이거나 수정 권한이 없습니다.")
     except Exception as e:
         print(f"[!] 수정 중 오류 발생: {e}")
     finally:

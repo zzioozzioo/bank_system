@@ -4,8 +4,7 @@ from utils import print_transaction_history, validate_amount, validate_balance, 
 
 def deposit_money(user_session):
     print("\n--- 입금하기 ---")
-    bank_name = input("은행명: ")
-    add_bank_name(bank_name)
+    bank_name = add_bank_name(input("은행명: "))
     account_num = input("입금할 계좌번호: ")
     amount = int(input("입금 금액: "))
     if not validate_amount(amount):
@@ -43,8 +42,7 @@ def deposit_money(user_session):
 
 def withdraw_money(user_session):
     print("\n--- 출금하기 ---")
-    bank_name = input("은행명: ")
-    add_bank_name(bank_name)
+    bank_name = add_bank_name(input("은행명: "))
     account_num = input("출금할 계좌번호: ")
     amount = int(input("출금 금액: "))
     if not validate_amount(amount):
@@ -95,12 +93,9 @@ def withdraw_money(user_session):
 
 def transfer_money(user_session):
     print("\n--- 계좌이체 ---")
-
-    from_bank = input("내 은행명: ")
-    add_bank_name(from_bank)
+    from_bank = add_bank_name(input("내 은행명: "))
     from_acc = input("내 계좌번호(출금): ")
-    to_bank = input("상대방 은행명: ")
-    add_bank_name(to_bank)
+    to_bank = add_bank_name(input("상대방 은행명: "))
     to_acc = input("상대방 계좌번호(입금): ")
     amount = int(input("이체 금액: "))
     if not validate_amount(amount):
@@ -172,8 +167,7 @@ def transfer_money(user_session):
 def transfer_to_friend(user_session):
     print("\n--- [타행 계좌이체] ---")
 
-    my_bank = input("내 은행명: ").strip()
-    add_bank_name(my_bank)
+    my_bank = add_bank_name(input("내 은행명: ").strip())
     my_acc = input("내 계좌번호: ").strip()
 
     friend_acc = input("상대방 계좌번호: ").strip()

@@ -25,17 +25,23 @@ def generate_account_number(cursor, bank_name):
         if count == 0:
             return new_acc
         
+from prettytable import PrettyTable
+
 def print_all_users(users):
     table = PrettyTable()
     
-    table.field_names = ["번호", "아이디", "이름"]
+    table.field_names = ["번호", "아이디", "이름", "계좌번호", "잔액"]
 
     for user in users:
-        table.add_row(user)
+        formatted_user = list(user)
+        formatted_user[4] = f"{user[4]:,} 원"
+        table.add_row(formatted_user)
 
-    table.align["번호"] = "c"
-    table.align["아이디"] = "l"
-    table.align["이름"] = "l"
+    table.align["번호"] = "c"   
+    table.align["아이디"] = "l"   
+    table.align["이름"] = "l"      
+    table.align["계좌번호"] = "l"  
+    table.align["잔액"] = "r"     
 
     print(f"\n--- 사용자 목록 (총 {len(users)}명) ---")
     print(table)
@@ -134,3 +140,4 @@ def confirm_delete_action(message):
 def add_bank_name(bank_name):
     if not bank_name.endswith("은행"):
         bank_name += "은행"
+    return bank_name

@@ -104,8 +104,8 @@ def validate_amount(amount):
         print("[!] 숫자만 입력 가능합니다.")
         return False
         
-    if amount < 1000:
-        print("[!] 최소 1,000원 이상 입력해야 합니다.")
+    if amount < 0:
+        print("[!] 1원 이상 입력해야 합니다.")
         return False
         
     return True
